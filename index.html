@@ -309,7 +309,10 @@ async function generateReel(idx) {
       throw new Error("TTS: " + (e.error || ttsRes.status));
     }
     const audioBuffer = await ttsRes.arrayBuffer();
-    const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+const audioBytes = new Uint8Array(audioBuffer);
+let binary = "";
+for (let i = 0; i < audioBytes.length; i++) binary += String.fromCharCode(audioBytes[i]);
+const audioBase64 = btoa(binary);
     step("✅", "Voz generada", "done");
     prog(25);
 
