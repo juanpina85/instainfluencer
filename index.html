@@ -302,7 +302,15 @@ async function generateReel(idx) {
     const ttsRes = await fetch(`${PROXY}/api/tts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: trend.script }),
+      // Limpiar el guión — sacar encabezados tipo [INTRO]: etc
+  const scriptClean = (trend.script || "")
+  .replace(/guión completo del reel[^:\n]*:/gi, "")
+  .replace(/\[INTRO\]:/gi, "")
+  .replace(/\[DESARROLLO\]:/gi, "")
+  .replace(/\[CTA\]:/gi, "")
+  .trim();
+
+body: JSON.stringify({ text: scriptClean }),
     });
     if (!ttsRes.ok) {
       const e = await ttsRes.json().catch(()=>({}));
