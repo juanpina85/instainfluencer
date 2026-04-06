@@ -186,10 +186,13 @@ async function callClaude(prompt) {
         messages: [{ role: "user", content: prompt }],
       }),
     });
-    if (res.status === 429) {
-      if (attempt === 4) throw new Error("Rate limit. Esperá unos minutos.");
-      continue;
-    }
+if (res.status === 429) {
+  if (attempt === 4) throw new Error("Rate limit. Esperá unos minutos y volvé a intentar.");
+  var waitSec = Math.pow(2, attempt) * 3;
+  setStatus("⏳ Rate limit — esperando " + waitSec + "s... (intento " + (attempt+2) + "/5)", true, "retrying");
+  await sleep(waitSec * 1000 + Math.random() * 1000);
+  continue;
+}
     if (!res.ok) {
       var b = await res.json().catch(function() { return {}; });
       throw new Error("Claude " + res.status + ": " + (b.error && b.error.message ? b.error.message : "error"));
