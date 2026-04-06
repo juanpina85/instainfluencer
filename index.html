@@ -34,11 +34,9 @@ header { background: linear-gradient(135deg,#1a0533,#3b0a1e 50%,#0f1a3b); paddin
 .status-bar.error { border-color:#ef444428; color:#ef4444; }
 .status-bar.retrying { border-color:#f59e0b28; color:#f59e0b; }
 .spin { width:14px; height:14px; border:2px solid #1a1d38; border-top-color:#a78bfa; border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
-
-/* Trend cards — full width */
 .trends-list { display:flex; flex-direction:column; gap:16px; }
 .trend-card { background:#0a0b18; border:1px solid #1a1d38; border-radius:16px; overflow:hidden; }
-.trend-top { display:grid; grid-template-columns:auto 1fr 1fr; gap:0; }
+.trend-top { display:grid; grid-template-columns:280px 1fr 260px; }
 .trend-info { padding:16px; border-right:1px solid #1a1d38; }
 .trend-content { padding:16px; border-right:1px solid #1a1d38; }
 .trend-reel { padding:16px; }
@@ -47,26 +45,23 @@ header { background: linear-gradient(135deg,#1a0533,#3b0a1e 50%,#0f1a3b); paddin
 .trend-title { font-size:14px; font-weight:700; color:#dde4ff; line-height:1.4; }
 .trend-desc { font-size:11px; color:#555; margin-top:4px; }
 .trend-tag { display:inline-block; margin-top:7px; font-size:10px; font-weight:700; border-radius:20px; padding:2px 9px; }
-.col-label { font-size:10px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:#f43f5e; margin-bottom:8px; }
-.ctext { background:#07080f; border:1px solid #1a1d38; border-radius:8px; padding:10px 12px; font-size:12px; color:#c0c8f0; line-height:1.6; white-space:pre-wrap; max-height:160px; overflow-y:auto; }
+.col-label { font-size:10px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:#f43f5e; margin-bottom:7px; }
+.ctext { background:#07080f; border:1px solid #1a1d38; border-radius:8px; padding:10px 12px; font-size:12px; color:#c0c8f0; line-height:1.6; white-space:pre-wrap; max-height:140px; overflow-y:auto; }
 .copy-btn { margin-top:6px; background:none; border:1px solid #252840; border-radius:7px; color:#555; font-size:10px; padding:3px 10px; cursor:pointer; }
 .copy-btn:hover { color:#a78bfa; border-color:#a78bfa; }
-
-/* Reel generation */
-.btn-reel { background:linear-gradient(135deg,#7c3aed,#f43f5e); border:none; border-radius:9px; color:#fff; font-size:12px; font-weight:700; padding:8px 16px; cursor:pointer; width:100%; margin-bottom:8px; }
+.btn-reel { background:linear-gradient(135deg,#7c3aed,#f43f5e); border:none; border-radius:9px; color:#fff; font-size:12px; font-weight:700; padding:8px 16px; cursor:pointer; width:100%; margin-bottom:10px; }
 .btn-reel:disabled { background:#1a1d38; color:#444; cursor:not-allowed; }
-.reel-step { display:flex; align-items:center; gap:7px; font-size:11px; color:#666; padding:4px 0; }
+.reel-step { display:flex; align-items:center; gap:7px; font-size:11px; color:#666; padding:3px 0; }
 .reel-step.done { color:#22c55e; }
-.reel-step.active { color:#a78bfa; }
+.reel-step.active { color:#a78bfa; animation:pulse 1.5s infinite; }
 .reel-step.err { color:#ef4444; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 .prog-bg { background:#1a1d38; border-radius:20px; height:4px; margin:8px 0; }
 .prog-fill { background:linear-gradient(90deg,#7c3aed,#f43f5e); height:100%; border-radius:20px; transition:width .6s; }
-.video-wrap video { width:100%; border-radius:10px; max-height:220px; background:#000; display:block; margin-bottom:8px; }
+.video-wrap video { width:100%; border-radius:10px; background:#000; display:block; margin-bottom:8px; }
 .btn-dl { display:block; background:linear-gradient(135deg,#7c3aed,#f43f5e); border-radius:9px; color:#fff; font-size:12px; font-weight:700; padding:8px 14px; text-decoration:none; text-align:center; }
-
 .empty { text-align:center; color:#2a2d48; padding:48px 0; font-size:13px; }
 .empty-icon { font-size:34px; margin-bottom:10px; }
-
 @media(max-width:900px){ .trend-top{grid-template-columns:1fr;} .trend-info,.trend-content{border-right:none;border-bottom:1px solid #1a1d38;} }
 @media(max-width:600px){ .regions{grid-template-columns:repeat(2,1fr);} }
 </style>
@@ -116,9 +111,11 @@ header { background: linear-gradient(135deg,#1a0533,#3b0a1e 50%,#0f1a3b); paddin
 
 <script>
 const PROXY = "https://runway-proxy-production.up.railway.app";
-const TAG_COLORS = { Política:"#ef4444", Tech:"#3b82f6", Deporte:"#22c55e", Economía:"#f59e0b", Cultura:"#a855f7", Internacional:"#06b6d4", default:"#6366f1" };
+const TAG_COLORS = {
+  Política:"#ef4444", Tech:"#3b82f6", Deporte:"#22c55e",
+  Economía:"#f59e0b", Cultura:"#a855f7", Internacional:"#06b6d4", default:"#6366f1"
+};
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-
 let currentRegion = "Argentina", payload = null;
 
 function selectRegion(name, el) {
@@ -127,33 +124,58 @@ function selectRegion(name, el) {
   currentRegion = name;
 }
 
-function setStatus(msg, loading=true, type="") {
+function setStatus(msg, loading, type) {
+  if (loading === undefined) loading = true;
+  if (!type) type = "";
   const bar = document.getElementById("statusBar");
-  bar.className = "status-bar show" + (type ? " "+type : "");
+  bar.className = "status-bar show" + (type ? " " + type : "");
   document.getElementById("statusSpin").style.display = loading ? "block" : "none";
   document.getElementById("statusText").textContent = msg;
 }
-function hideStatus() { document.getElementById("statusBar").className = "status-bar"; }
+
+function hideStatus() {
+  document.getElementById("statusBar").className = "status-bar";
+}
 
 function extractJSON(raw) {
   if (!raw) return null;
-  try { return JSON.parse(raw.trim()); } catch {}
-  const f = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (f) { try { return JSON.parse(f[1].trim()); } catch {} }
-  const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
-  if (s !== -1 && e !== -1) { try { return JSON.parse(raw.slice(s, e+1)); } catch {} }
+  try { return JSON.parse(raw.trim()); } catch(e) {}
+  var f = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (f) { try { return JSON.parse(f[1].trim()); } catch(e) {} }
+  var s = raw.indexOf("{");
+  var e = raw.lastIndexOf("}");
+  if (s !== -1 && e !== -1) { try { return JSON.parse(raw.slice(s, e+1)); } catch(ex) {} }
   return null;
 }
 
+function cleanScript(script) {
+  return (script || "")
+    .replace(/guión completo del reel[^:\n]*:/gi, "")
+    .replace(/\[INTRO\]\s*:/gi, "")
+    .replace(/\[DESARROLLO\]\s*:/gi, "")
+    .replace(/\[CTA\]\s*:/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function bufferToBase64(buffer) {
+  var bytes = new Uint8Array(buffer);
+  var binary = "";
+  for (var i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 async function callClaude(prompt) {
-  for (let attempt = 0; attempt <= 4; attempt++) {
+  for (var attempt = 0; attempt <= 4; attempt++) {
     if (attempt > 0) {
-      const w = Math.pow(2, attempt-1) * 2;
-      setStatus(`⏳ Rate limit — esperando ${w}s... (intento ${attempt+1}/5)`, true, "retrying");
+      var w = Math.pow(2, attempt - 1) * 2;
+      setStatus("⏳ Rate limit — esperando " + w + "s... (intento " + (attempt+1) + "/5)", true, "retrying");
       await sleep(w * 1000 + Math.random() * 600);
-      setStatus(`🔄 Reintentando (${attempt+1}/5)...`);
+      setStatus("🔄 Reintentando (" + (attempt+1) + "/5)...");
     }
-    const res = await fetch(`${PROXY}/api/claude`, {
+    var res = await fetch(PROXY + "/api/claude", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -164,235 +186,241 @@ async function callClaude(prompt) {
         messages: [{ role: "user", content: prompt }],
       }),
     });
-    if (res.status === 429) { if (attempt === 4) throw new Error("Rate limit. Esperá unos minutos."); continue; }
-    if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(`Claude ${res.status}: ${b.error?.message||"error"}`); }
-    const data = await res.json();
-    return data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n");
+    if (res.status === 429) {
+      if (attempt === 4) throw new Error("Rate limit. Esperá unos minutos.");
+      continue;
+    }
+    if (!res.ok) {
+      var b = await res.json().catch(function() { return {}; });
+      throw new Error("Claude " + res.status + ": " + (b.error && b.error.message ? b.error.message : "error"));
+    }
+    var data = await res.json();
+    return data.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("\n");
   }
 }
 
 async function run() {
-  const btn = document.getElementById("mainBtn");
+  var btn = document.getElementById("mainBtn");
   btn.disabled = true;
   payload = null;
   document.getElementById("trendsPanel").innerHTML = '<div class="empty"><div class="empty-icon">⏳</div>Buscando noticias...</div>';
 
-  const today = new Date().toLocaleDateString("es-AR", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
-  const prompt = `Hoy es ${today}. Buscá en internet las 5 noticias más importantes y virales de HOY en: ${currentRegion}.
-
-Para CADA noticia generá contenido completo para un Reel de Instagram.
-
-Respondé ÚNICAMENTE con este JSON (sin backticks):
-{
-  "trends": [
-    {
-      "title": "título corto",
-      "desc": "descripción 1 oración",
-      "tag": "Política|Tech|Deporte|Economía|Cultura|Internacional",
-      "source": "medio",
-      "hook": "gancho primeros 3 segundos del reel, español argentino informal, intrigante",
-      "script": "guión completo del reel 30-45 seg para ser narrado en voz en off:\\n[INTRO]: ...\\n[DESARROLLO]: ...\\n[CTA]: ...",
-      "caption": "caption IG max 100 palabras, español argentino informal, con emojis",
-      "hashtags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8","tag9","tag10"],
-      "video_prompt": "Cinematic 9:16 vertical Runway Gen-4.5 prompt in English, no text on screen, documentary news style, dramatic lighting, specific to this news story"
-    }
-  ]
-}
-Generá exactamente 5 objetos en el array trends, uno por noticia.`;
+  var today = new Date().toLocaleDateString("es-AR", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  var prompt = "Hoy es " + today + ". Buscá en internet las 5 noticias más importantes y virales de HOY en: " + currentRegion + ".\n\nPara CADA noticia generá contenido completo para un Reel de Instagram.\n\nRespondé ÚNICAMENTE con este JSON (sin backticks):\n{\n  \"trends\": [\n    {\n      \"title\": \"título corto\",\n      \"desc\": \"descripción 1 oración\",\n      \"tag\": \"Política|Tech|Deporte|Economía|Cultura|Internacional\",\n      \"source\": \"medio\",\n      \"hook\": \"gancho primeros 3 segundos, español argentino informal, intrigante\",\n      \"script\": \"texto para narrar en voz en off, directo, sin encabezados. 30-45 segundos hablados. Tono intrigante y dinámico.\",\n      \"caption\": \"caption IG max 100 palabras, español argentino informal, con emojis\",\n      \"hashtags\": [\"tag1\",\"tag2\",\"tag3\",\"tag4\",\"tag5\",\"tag6\",\"tag7\",\"tag8\",\"tag9\",\"tag10\"],\n      \"video_prompt\": \"Cinematic 9:16 vertical Runway Gen-4.5 prompt in English, no text on screen, documentary news style, dramatic lighting, specific to this news story\"\n    }\n  ]\n}\nGenerá exactamente 5 objetos en trends.";
 
   try {
     setStatus("🔍 Buscando noticias y generando contenido...");
-    const raw = await callClaude(prompt);
-    const parsed = extractJSON(raw);
-    if (!parsed?.trends?.length) throw new Error("Respuesta inválida. Intentá de nuevo.");
+    var raw = await callClaude(prompt);
+    var parsed = extractJSON(raw);
+    if (!parsed || !parsed.trends || !parsed.trends.length) throw new Error("Respuesta inválida. Intentá de nuevo.");
     payload = parsed;
     renderTrends(parsed.trends);
-    setStatus(`✅ Listo — ${new Date().toLocaleTimeString("es-AR")}`, false);
+    setStatus("✅ Listo — " + new Date().toLocaleTimeString("es-AR"), false);
     setTimeout(hideStatus, 3000);
   } catch(e) {
     setStatus("❌ " + e.message, false, "error");
-    document.getElementById("trendsPanel").innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+    document.getElementById("trendsPanel").innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>' + e.message + '</div>';
   }
   btn.disabled = false;
 }
 
-function renderTrends(trends) {
-  document.getElementById("trendsPanel").innerHTML = `<div class="trends-list">${trends.map((t,i) => {
-    const c = TAG_COLORS[t.tag] || TAG_COLORS.default;
-    const hashStr = (t.hashtags||[]).map(h=>"#"+h.replace(/^#/,"")).join(" ");
-    return `<div class="trend-card">
-      <div class="trend-top">
-        <!-- COL 1: Noticia -->
-        <div class="trend-info">
-          <div class="trend-row">
-            <div class="trend-num">${i+1}</div>
-            <div>
-              <div class="trend-title">${t.title}</div>
-              ${t.desc?`<div class="trend-desc">${t.desc}</div>`:""}
-              <span class="trend-tag" style="background:${c}20;color:${c};border:1px solid ${c}44">${t.tag}</span>
-              ${t.source?`<div style="font-size:10px;color:#444;margin-top:4px">📰 ${t.source}</div>`:""}
-            </div>
-          </div>
-        </div>
-
-        <!-- COL 2: Contenido -->
-        <div class="trend-content">
-          <div style="margin-bottom:12px">
-            <div class="col-label">⚡ Hook</div>
-            <div class="ctext" style="max-height:60px">${t.hook||""}</div>
-          </div>
-          <div style="margin-bottom:12px">
-            <div class="col-label">🎬 Guión del Reel</div>
-            <div class="ctext">${t.script||""}</div>
-            <button class="copy-btn" onclick="cp(this,\`${esc(t.script)}\`)">📋 Copiar guión</button>
-          </div>
-          <div style="margin-bottom:12px">
-            <div class="col-label">📝 Caption</div>
-            <div class="ctext" style="max-height:80px">${t.caption||""}</div>
-            <button class="copy-btn" onclick="cp(this,\`${esc(t.caption)}\`)">📋 Copiar caption</button>
-          </div>
-          <div>
-            <div class="col-label">🏷️ Hashtags</div>
-            <div class="ctext" style="max-height:50px;font-size:11px;color:#c084fc">${hashStr}</div>
-            <button class="copy-btn" onclick="cp(this,\`${esc(hashStr)}\`)">📋 Copiar hashtags</button>
-          </div>
-        </div>
-
-        <!-- COL 3: Generar Reel -->
-        <div class="trend-reel">
-          <div class="col-label">🎥 Reel con Voz</div>
-          <button class="btn-reel" id="btn-reel-${i}" onclick="generateReel(${i})">
-            🎬 Generar Reel + Voz
-          </button>
-          <div id="reel-status-${i}"></div>
-          <div id="reel-result-${i}"></div>
-        </div>
-      </div>
-    </div>`;
-  }).join("")}</div>`;
+function esc(s) {
+  return (s || "").replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$/g, "\\$");
 }
 
-// ── Generar Reel + Voz + Merge ────────────────────────────
+function renderTrends(trends) {
+  var html = '<div class="trends-list">';
+  for (var i = 0; i < trends.length; i++) {
+    var t = trends[i];
+    var c = TAG_COLORS[t.tag] || TAG_COLORS["default"];
+    var hashStr = (t.hashtags || []).map(function(h) { return "#" + h.replace(/^#/, ""); }).join(" ");
+    html += '<div class="trend-card"><div class="trend-top">';
+
+    // COL 1
+    html += '<div class="trend-info"><div class="trend-row">';
+    html += '<div class="trend-num">' + (i+1) + '</div>';
+    html += '<div>';
+    html += '<div class="trend-title">' + t.title + '</div>';
+    if (t.desc) html += '<div class="trend-desc">' + t.desc + '</div>';
+    html += '<span class="trend-tag" style="background:' + c + '20;color:' + c + ';border:1px solid ' + c + '44">' + t.tag + '</span>';
+    if (t.source) html += '<div style="font-size:10px;color:#444;margin-top:5px">📰 ' + t.source + '</div>';
+    html += '<div style="margin-top:12px"><div class="col-label">⚡ Hook</div>';
+    html += '<div class="ctext" style="max-height:60px;font-size:11px">' + (t.hook || "") + '</div></div>';
+    html += '</div></div></div>';
+
+    // COL 2
+    html += '<div class="trend-content">';
+    html += '<div style="margin-bottom:12px"><div class="col-label">🎬 Guión (voz en off)</div>';
+    html += '<div class="ctext">' + (t.script || "") + '</div>';
+    html += '<button class="copy-btn" onclick="cp(this,`' + esc(t.script) + '`)">📋 Copiar guión</button></div>';
+    html += '<div style="margin-bottom:12px"><div class="col-label">📝 Caption</div>';
+    html += '<div class="ctext" style="max-height:80px">' + (t.caption || "") + '</div>';
+    html += '<button class="copy-btn" onclick="cp(this,`' + esc(t.caption) + '`)">📋 Copiar caption</button></div>';
+    html += '<div><div class="col-label">🏷️ Hashtags</div>';
+    html += '<div class="ctext" style="max-height:45px;font-size:11px;color:#c084fc">' + hashStr + '</div>';
+    html += '<button class="copy-btn" onclick="cp(this,`' + esc(hashStr) + '`)">📋 Copiar hashtags</button></div>';
+    html += '</div>';
+
+    // COL 3
+    html += '<div class="trend-reel">';
+    html += '<div class="col-label">🎥 Reel con Voz</div>';
+    html += '<button class="btn-reel" id="btn-reel-' + i + '" onclick="generateReel(' + i + ')">🎬 Generar Reel + Voz</button>';
+    html += '<div id="reel-status-' + i + '"></div>';
+    html += '<div id="reel-result-' + i + '"></div>';
+    html += '</div>';
+
+    html += '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById("trendsPanel").innerHTML = html;
+}
+
 async function generateReel(idx) {
-  const trend = payload?.trends?.[idx];
+  var trend = payload && payload.trends && payload.trends[idx];
   if (!trend) return;
 
-  const btn    = document.getElementById(`btn-reel-${idx}`);
-  const status = document.getElementById(`reel-status-${idx}`);
-  const result = document.getElementById(`reel-result-${idx}`);
+  var btn    = document.getElementById("btn-reel-" + idx);
+  var status = document.getElementById("reel-status-" + idx);
+  var result = document.getElementById("reel-result-" + idx);
 
   btn.disabled = true;
   result.innerHTML = "";
+  status.innerHTML = '<div class="prog-bg"><div class="prog-fill" id="prog-' + idx + '" style="width:3%"></div></div>';
 
-  const step = (icon, msg, state="active") => {
-    status.innerHTML += `<div class="reel-step ${state}">${icon} ${msg}</div>`;
-  };
-  const setStep = (html) => { status.innerHTML = html; };
-  const prog = (pct) => {
-    const pb = document.getElementById(`prog-${idx}`);
-    if (pb) pb.style.width = pct + "%";
-  };
+  function addStep(icon, msg, state) {
+    if (!state) state = "active";
+    var prev = status.querySelector(".reel-step.active");
+    if (prev) prev.className = "reel-step done";
+    status.insertAdjacentHTML("beforeend", '<div class="reel-step ' + state + '">' + icon + ' ' + msg + '</div>');
+  }
 
-  status.innerHTML = `<div class="prog-bg"><div class="prog-fill" id="prog-${idx}" style="width:5%"></div></div>`;
+  function prog(pct) {
+    var p = document.getElementById("prog-" + idx);
+    if (p) p.style.width = pct + "%";
+  }
 
   try {
-    // PASO 1 — Generar audio TTS
-    step("🔊", "Generando voz en off...");
-    prog(10);
-    const ttsRes = await fetch(`${PROXY}/api/tts`, {
+    // PASO 1 — TTS
+    addStep("🔊", "Generando voz en off...");
+    prog(8);
+
+    var scriptClean = cleanScript(trend.script);
+    var ttsRes = await fetch(PROXY + "/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // Limpiar el guión — sacar encabezados tipo [INTRO]: etc
-  const scriptClean = (trend.script || "")
-  .replace(/guión completo del reel[^:\n]*:/gi, "")
-  .replace(/\[INTRO\]:/gi, "")
-  .replace(/\[DESARROLLO\]:/gi, "")
-  .replace(/\[CTA\]:/gi, "")
-  .trim();
-
-body: JSON.stringify({ text: scriptClean }),
+      body: JSON.stringify({ text: scriptClean }),
     });
     if (!ttsRes.ok) {
-      const e = await ttsRes.json().catch(()=>({}));
+      var e = await ttsRes.json().catch(function() { return {}; });
       throw new Error("TTS: " + (e.error || ttsRes.status));
     }
-    const audioBuffer = await ttsRes.arrayBuffer();
-const audioBytes = new Uint8Array(audioBuffer);
-let binary = "";
-for (let i = 0; i < audioBytes.length; i++) binary += String.fromCharCode(audioBytes[i]);
-const audioBase64 = btoa(binary);
-    step("✅", "Voz generada", "done");
-    prog(25);
+    var ttsData = await ttsRes.json();
+    var audioBase64 = ttsData.audioBase64;
+    var durationSec = ttsData.durationSec || 30;
 
-    // PASO 2 — Crear tarea de video en Runway
-    step("🎬", "Enviando a Runway...");
-    prog(30);
-    const runRes = await fetch(`${PROXY}/api/runway/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: trend.video_prompt }),
-    });
-    if (!runRes.ok) {
-      const e = await runRes.json().catch(()=>({}));
-      throw new Error("Runway: " + (e.error || runRes.status));
+    addStep("✅", "Voz lista (~" + durationSec + "s)", "done");
+    prog(20);
+
+    // PASO 2 — Calcular clips y crear tareas Runway
+    var numClips = Math.max(1, Math.ceil(durationSec / 10));
+    addStep("🎬", "Creando " + numClips + " tarea" + (numClips > 1 ? "s" : "") + " en Runway...");
+    prog(28);
+
+    var taskIds = [];
+    for (var c = 0; c < numClips; c++) {
+      var runRes = await fetch(PROXY + "/api/runway/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: trend.video_prompt }),
+      });
+      if (!runRes.ok) {
+        var re = await runRes.json().catch(function() { return {}; });
+        throw new Error("Runway: " + (re.error || runRes.status));
+      }
+      var runData = await runRes.json();
+      taskIds.push(runData.taskId);
     }
-    const { taskId } = await runRes.json();
-    step("✅", "Tarea de video creada", "done");
+
+    addStep("✅", numClips + " tarea" + (numClips > 1 ? "s" : "") + " creadas", "done");
     prog(35);
 
-    // PASO 3 — Polling Runway
-    step("⏳", "Generando video (~1-2 min)...");
-    let videoUrl = null;
-    for (let i = 0; i < 72; i++) {
-      await sleep(5000);
-      const pr = await fetch(`${PROXY}/api/runway/status/${taskId}`);
-      if (!pr.ok) throw new Error(`Poll ${pr.status}`);
-      const d = await pr.json();
-      prog(35 + Math.min(35, Math.round((i/72)*35)));
-      if (d.status === "SUCCEEDED") { videoUrl = d.url; break; }
-      if (d.status === "FAILED") throw new Error("Video fallido en Runway: " + (d.failure||""));
-    }
-    if (!videoUrl) throw new Error("Timeout esperando el video");
-    step("✅", "Video generado", "done");
-    prog(75);
+    // PASO 3 — Polling
+    addStep("⏳", "Generando video" + (numClips > 1 ? "s" : "") + " (~" + numClips + "-" + (numClips*2) + " min)...");
 
-    // PASO 4 — Merge video + audio
-    step("🔀", "Combinando video + voz...");
-    prog(80);
-    const mergeRes = await fetch(`${PROXY}/api/merge`, {
+    var videoUrls = new Array(numClips).fill(null);
+    var pending = [];
+    for (var pi = 0; pi < numClips; pi++) pending.push(pi);
+
+    while (pending.length > 0) {
+      await sleep(5000);
+      var stillPending = [];
+      for (var pi2 = 0; pi2 < pending.length; pi2++) {
+        var ci = pending[pi2];
+        var pr = await fetch(PROXY + "/api/runway/status/" + taskIds[ci]);
+        if (!pr.ok) throw new Error("Poll " + pr.status);
+        var pd = await pr.json();
+        if (pd.status === "SUCCEEDED") {
+          videoUrls[ci] = pd.url;
+        } else if (pd.status === "FAILED") {
+          throw new Error("Video fallido: " + (pd.failure || ""));
+        } else {
+          stillPending.push(ci);
+        }
+      }
+      pending = stillPending;
+      var done = numClips - pending.length;
+      prog(35 + Math.round((done / numClips) * 40));
+    }
+
+    addStep("✅", "Video" + (numClips > 1 ? "s" : "") + " generado" + (numClips > 1 ? "s" : ""), "done");
+    prog(78);
+
+    // PASO 4 — Merge con hook
+    addStep("🔀", "Combinando video + voz + texto...");
+    prog(82);
+
+    var mergeRes = await fetch(PROXY + "/api/merge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoUrls, audioBase64, hook: trend.hook }),
+      body: JSON.stringify({ videoUrls: videoUrls, audioBase64: audioBase64, hook: trend.hook }),
     });
     if (!mergeRes.ok) {
-      const e = await mergeRes.json().catch(()=>({}));
-      throw new Error("Merge: " + (e.error || mergeRes.status));
+      var me = await mergeRes.json().catch(function() { return {}; });
+      throw new Error("Merge: " + (me.error || mergeRes.status));
     }
-    const reelBlob = await mergeRes.blob();
-    const reelUrl  = URL.createObjectURL(reelBlob);
-    step("✅", "¡Reel listo!", "done");
+
+    var reelBlob = await mergeRes.blob();
+    var reelUrl  = URL.createObjectURL(reelBlob);
+
+    addStep("✅", "¡Reel listo!", "done");
     prog(100);
 
-    result.innerHTML = `<div class="video-wrap" style="margin-top:10px">
-      <video src="${reelUrl}" controls playsinline></video>
-      <a class="btn-dl" href="${reelUrl}" download="reel-tendencia-${idx+1}.mp4">⬇️ Descargar Reel</a>
-    </div>`;
+    result.innerHTML = '<div class="video-wrap" style="margin-top:10px">'
+      + '<video src="' + reelUrl + '" controls playsinline></video>'
+      + '<a class="btn-dl" href="' + reelUrl + '" download="reel-' + (idx+1) + '.mp4">⬇️ Descargar Reel</a>'
+      + '</div>';
 
-  } catch(e) {
-    status.innerHTML += `<div class="reel-step err">❌ ${e.message}</div>`;
+  } catch(err) {
+    var prev2 = status.querySelector(".reel-step.active");
+    if (prev2) prev2.className = "reel-step err";
+    status.insertAdjacentHTML("beforeend", '<div class="reel-step err">❌ ' + err.message + '</div>');
     btn.disabled = false;
     btn.textContent = "🔄 Reintentar";
-    btn.onclick = () => generateReel(idx);
+    btn.onclick = function() { btn.textContent = "🎬 Generar Reel + Voz"; generateReel(idx); };
   }
 }
 
 function cp(btn, text) {
-  navigator.clipboard.writeText(text).then(()=>{ btn.textContent="✅ Copiado"; setTimeout(()=>btn.textContent=btn.textContent.includes("guión")?"📋 Copiar guión":btn.textContent.includes("caption")?"📋 Copiar caption":btn.textContent.includes("hashtag")?"📋 Copiar hashtags":"📋 Copiar",2000); });
+  navigator.clipboard.writeText(text).then(function() {
+    var orig = btn.textContent;
+    btn.textContent = "✅ Copiado";
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  });
 }
-function esc(s){ return (s||"").replace(/\\/g,"\\\\").replace(/`/g,"\\`").replace(/\$/g,"\\$"); }
-function clearAll(){
-  payload=null;
-  document.getElementById("trendsPanel").innerHTML='<div class="empty"><div class="empty-icon">🌎</div>Seleccioná región y presioná el botón</div>';
+
+function clearAll() {
+  payload = null;
+  document.getElementById("trendsPanel").innerHTML = '<div class="empty"><div class="empty-icon">🌎</div>Seleccioná región y presioná el botón</div>';
   hideStatus();
 }
 </script>
