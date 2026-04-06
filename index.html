@@ -362,7 +362,7 @@ const audioBase64 = btoa(binary);
     const mergeRes = await fetch(`${PROXY}/api/merge`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoUrl, audioBase64 }),
+      body: JSON.stringify({ videoUrls, audioBase64, hook: trend.hook }),
     });
     if (!mergeRes.ok) {
       const e = await mergeRes.json().catch(()=>({}));
